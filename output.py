@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import statistics as s
 import itertools as it
-from math import comb
+from math import factorial
 
 #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  
 #  #  #  #    Printing functions    #  #  #  #  
@@ -92,6 +92,7 @@ def multicolumn(series,cols:int=5) -> pd.DataFrame:
 # For a visual assessment of the quality of the model, we will use the confusion matrix
 yvg = list([(abs(np.cos(x-1)),abs(np.sin(x+1)),abs(np.sin(x*x))) for x in np.arange(-2,0,0.1)])
 pal_yvg = sns.color_palette(yvg)
+comb = lambda n, k: factorial(n) / (factorial(k) * factorial(n-k)) # n! / (k! * (n – k)!)
 comb_2 = lambda n: comb(n,2)
 
 def plot_some_scatters(X,y,name:str=None,s:float=5):
