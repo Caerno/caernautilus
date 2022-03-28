@@ -7,7 +7,7 @@
     - analysis of initial dataset with target feature
   - imperfection
     - missing values, dtypes & value counts
-  -  multicolumn
+  - multicolumn
     - viewing long data series or df's with one column
 * Plotting functions 
   - plot_some_scatters
