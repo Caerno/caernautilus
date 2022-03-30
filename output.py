@@ -150,6 +150,8 @@ def plot_conf_map(conf:np.ndarray,title:str=None) -> None:
 
     plt.show()
 
+    return (*p_list.ravel(), *r_list.ravel(), hm)
+
 # Images transforms
 
 # This fuctions break our picture
