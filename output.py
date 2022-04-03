@@ -113,7 +113,7 @@ def plot_some_scatters(X,y,name:str=None,s:float=5):
         ax.set(xlabel=f"axis {x_idx}", ylabel=f"axis {y_idx}")
     plt.show()
 
-def plot_conf_map(conf:np.ndarray,title:str=None) -> None:
+def plot_conf_map(conf:np.ndarray,title:str=None,blind:bool=False) -> None:
     '''
     displaying the confusion matrix graphically with additional coefficients
     '''
@@ -129,28 +129,29 @@ def plot_conf_map(conf:np.ndarray,title:str=None) -> None:
     # generalization of F1 metrix since we don't know in advance which class is the main one
     hm = s.harmonic_mean((*r_list,*p_list)) 
 
-    coef_m = np.hstack((
-            np.vstack( (conf_share,p_list) ),
-            np.append(r_list,hm).reshape(-1,1) ))
+    if not blind:
+        coef_m = np.hstack((
+                np.vstack( (conf_share,p_list) ),
+                np.append(r_list,hm).reshape(-1,1) ))
 
-    labels = np.asarray([f"{share:.1%}" for share in coef_m.ravel()]).reshape(q+1,q+1)
-    labels[-1][-1] = f"H:{hm:.0%}"
-    ax = sns.heatmap(coef_m, annot=labels, fmt='', cmap=pal_yvg, vmin=0, vmax=1)
+        labels = np.asarray([f"{share:.1%}" for share in coef_m.ravel()]).reshape(q+1,q+1)
+        labels[-1][-1] = f"H:{hm:.0%}"
+        ax = sns.heatmap(coef_m, annot=labels, fmt='', cmap=pal_yvg, vmin=0, vmax=1)
 
-    xlabels = [item.get_text() for item in ax.get_xticklabels()]
-    ylabels = [item.get_text() for item in ax.get_yticklabels()]
-    xlabels[-1] = 'Rate'
-    ylabels[-1] = 'Prediction\nvalue'
+        xlabels = [item.get_text() for item in ax.get_xticklabels()]
+        ylabels = [item.get_text() for item in ax.get_yticklabels()]
+        xlabels[-1] = 'Rate'
+        ylabels[-1] = 'Prediction\nvalue'
 
-    ax.set_xticklabels(xlabels)
-    ax.set_yticklabels(ylabels)
-    
-    if title is not None:
-        plt.title(title)
+        ax.set_xticklabels(xlabels)
+        ax.set_yticklabels(ylabels)
+        
+        if title is not None:
+            plt.title(title)
 
-    plt.show()
+        plt.show()
 
-    return (*p_list.ravel(), *r_list.ravel(), hm)
+    return hm, p_list.ravel(), r_list.ravel()
 
 # Images transforms
 
