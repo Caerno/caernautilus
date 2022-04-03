@@ -25,7 +25,7 @@ class FeatureTrans:
     def __init__(self,data:pd.Series,n:int=5,n_step:int=5,n_max:int=50,empty:bool=False):
         '''Initiating object with data series'''
         if empty:
-            return "Function access object created"
+            return
 
         if str(data.dtype) == 'category':
             self.data = pd.Series(data.cat.codes, name=data.name, index = data.index )
