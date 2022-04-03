@@ -102,7 +102,7 @@ class FeatureTrans:
         replaces = {'Yes':1, 'No':0}
         unique = data.unique()
         nonstandart = pd.Series([value not in replaces.keys() for value in unique]).sum()
-        if nonstandart > 0:
+        if nonstandart > 0 and len(unique) == 2:
             l1, l2 = unique
             replaces = {l1:0,l2:1}
         return pd.Series(data.replace(replaces),name=data.name + "_bilabel")
