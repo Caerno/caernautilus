@@ -113,7 +113,12 @@ def plot_some_scatters(X,y,name:str=None,s:float=5):
         ax.set(xlabel=f"axis {x_idx}", ylabel=f"axis {y_idx}")
     plt.show()
 
-def plot_conf_map(conf:np.ndarray,title:str=None,blind:bool=False) -> None:
+def plot_conf_map(
+    conf:np.ndarray,
+    title:str=None,
+    compact:bool=False,
+    figsize:tuple=(6.4, 4.8),
+    blind:bool=False) -> None:
     '''
     displaying the confusion matrix graphically with additional coefficients
     '''
@@ -133,9 +138,13 @@ def plot_conf_map(conf:np.ndarray,title:str=None,blind:bool=False) -> None:
                 np.vstack( (conf_share,p_list) ),
                 np.append(r_list,hm).reshape(-1,1) ))
 
-        labels = np.asarray([f"{share:.1%}" for share in coef_m.ravel()]).reshape(q+1,q+1)
+        if compact:
+            labels = np.asarray([f"{share:.0%}" for share in coef_m.ravel()]).reshape(q+1,q+1)
+        else:
+            labels = np.asarray([f"{share:.1%}" for share in coef_m.ravel()]).reshape(q+1,q+1)
         labels[-1][-1] = f"H:{hm:.0%}"
-        ax = sns.heatmap(coef_m, annot=labels, fmt='', cmap=pal_yvg, vmin=0, vmax=1)
+        fig, ax = plt.subplots(figsize=figsize) 
+        sns.heatmap(coef_m, annot=labels, fmt='', cmap=pal_yvg, vmin=0, vmax=1)
 
         xlabels = [item.get_text() for item in ax.get_xticklabels()]
         ylabels = [item.get_text() for item in ax.get_yticklabels()]
