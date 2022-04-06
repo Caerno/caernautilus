@@ -127,11 +127,12 @@ def plot_conf_map(
     conf_share = conf_m/np.sum(conf)
 
     true_ans = np.diag(conf_m)
-    p_list = true_ans / np.sum(conf_m, axis=0)
-    r_list = true_ans / np.sum(conf_m, axis=1)
+    p_list = true_ans / (np.sum(conf_m, axis=0) + 2.2250738585072014e-308 ) # divide by zero hack
+    r_list = true_ans / (np.sum(conf_m, axis=1) + 2.2250738585072014e-308 ) # divide by zero hack
 
     # generalization of F1 metrix since we don't know in advance which class is the main one
-    hm = s.harmonic_mean((*r_list,*p_list)) 
+    
+    hm = s.harmonic_mean(np.r_[p_list,r_list] + 2.2250738585072014e-308) 
 
     if not blind:
         coef_m = np.hstack((
