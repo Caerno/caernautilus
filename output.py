@@ -117,8 +117,7 @@ def plot_conf_map(conf:np.ndarray,title:str=None,blind:bool=False) -> None:
     '''
     displaying the confusion matrix graphically with additional coefficients
     '''
-    sq = lambda x: int(np.sqrt(x))
-    q = sq(len(conf)) == 1 and 2 or sq(len(conf))
+    q = len(conf)
     conf_m = np.reshape(np.array(conf),(q,q))
     conf_share = conf_m/np.sum(conf)
 
