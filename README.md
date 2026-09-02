@@ -159,3 +159,9 @@ and satisfies the condition.
 pip install -e .[test]
 pytest
 ```
+
+The drop-in zip in `download/` is a plain stdlib call, no notebook needed:
+
+```bash
+python -m zipfile -c download/caernautilus.zip __init__.py classes.py input.py output.py
+```
