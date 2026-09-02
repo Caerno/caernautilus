@@ -29,8 +29,8 @@ def informer(df:pd.DataFrame,target:str) -> dict:
         }
 
 def informer_print(info:dict) -> None:
-    txt_classes = ", ".join([f"{i}: {n/(info['train_obs']):.1%}" 
-                    for i, n in enumerate(info["classes"])])
+    txt_classes = ", ".join([f"{cls}: {n/(info['train_obs']):.1%}" 
+                    for cls, n in info["classes"].items()])
     print(f'''\n\tFeatures:\t{info['features']}
     \tObservations:\t{info['train_obs']}/{info['test_obs']}
     \ttrain dataset:\t{info['train_obs']/(info['train_obs']+info['test_obs']):.1%}
@@ -83,7 +83,8 @@ def multicolumn(series,cols:int=5) -> pd.DataFrame:
         portion.columns = [f"col_{i+1}",f"val_{i+1}"]
         portions.append(portion)
         portions.append(col_sep)
-    return pd.concat(portions,axis=1).fillna("").style.set_caption("{}: {}".format(*title))
+    table = pd.concat(portions,axis=1)
+    return table.where(table.notna(),"").style.set_caption("{}: {}".format(*title))
 
 #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  
 #  #  #  #    Plotting functions    #  #  #  #  

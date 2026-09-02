@@ -10,7 +10,7 @@ from sklearn.exceptions import NotFittedError
 class Encoder(BaseEstimator, TransformerMixin):
     def check_fit(self):
         if not self.fitted:
-            raise NotFittedError(f"This {__class__.__name__} instance is not fitted yet.\
+            raise NotFittedError(f"This {type(self).__name__} instance is not fitted yet.\
                 Call 'fit' with appropriate arguments before using this estimator.")
     @staticmethod
     def pd(X):
@@ -108,7 +108,8 @@ class FeatureTrans:
         if nonstandart > 0 and len(unique) == 2:
             l1, l2 = unique
             replaces = {l1:0,l2:1}
-        return pd.Series(data.replace(replaces),name=data.name + "_bilabel")
+        return pd.Series(data.map({v:replaces.get(v,v) for v in unique}),
+                         name=data.name + "_bilabel")
 
     @staticmethod
     def fuzzy_mean(data:pd.Series,astype=float) -> pd.Series:
@@ -129,10 +130,9 @@ class FeatureTrans:
     def robust(data:pd.Series,method:str) -> pd.Series:
         '''Filling nan values with mean/median'''
         data = data.copy()
-        try:
-            value = data.agg(method)[0]
-        except TypeError:
-            value = data.agg(method)
+        value = data.agg(method)
+        if isinstance(value, pd.Series): # 'mode' gives a Series, 'mean'/'median' a scalar
+            value = value.iloc[0]
         return data.fillna(value)
 
     @staticmethod
@@ -145,7 +145,7 @@ class FeatureTrans:
     @staticmethod
     def count(data): 
         ''' Freq count '''
-        return pd.Series(data.replace(data.value_counts().to_dict()),name=data.name+"_count")
+        return pd.Series(data.map(data.value_counts().to_dict()),name=data.name+"_count")
 
     @staticmethod
     def freq(data): 
@@ -156,19 +156,19 @@ class FeatureTrans:
         n = len(data)
         if maxvc < nunique:
             t = "u"
-            result = data.replace((vcounts / nunique).to_dict())
+            result = data.map((vcounts / nunique).to_dict())
         elif maxvc / n > 0.2:
             t = "n"
-            result = data.replace((vcounts / n).to_dict())
+            result = data.map((vcounts / n).to_dict())
         else:
             t = "o"
-            result = data.replace((vcounts / maxvc).to_dict())
+            result = data.map((vcounts / maxvc).to_dict())
         return pd.Series(result,name=data.name+f"_freq{t}")
 
     @staticmethod
     def top(data,n):
         ''' Top rating - most frequent becomes 1, less becomes 2, 3 .. n'''
-        return pd.Series(data.replace({
+        return pd.Series(data.map({
             v:i+1 if i < n else n 
             for i,v in enumerate(data.value_counts().index)}),
             name=data.name+f"_top{n}")
@@ -249,7 +249,7 @@ class NanFixer(Encoder,FeatureTrans):
                         }
             elif datatype == np.dtype(object):
                 datamodefreq = data.value_counts()[data.mode()]/len(data)
-                if datamodefreq[0] > 0.25: # TODO: in parameters?
+                if datamodefreq.iloc[0] > 0.25: # TODO: in parameters?
                     self.plan[col] = {
                         "func":__class__.robust,
                         "param":{"method":"mode"} 
@@ -271,6 +271,9 @@ class NanFixer(Encoder,FeatureTrans):
 
         result = pd.DataFrame().reindex_like(X)
         for col in X:
+            if col not in self.plan: # dtype we have no strategy for - pass through
+                result[col] = X[col]
+                continue
             func, param = self.plan[col]["func"], self.plan[col]["param"]
             result[col] = func(X[col],**param)
 
@@ -352,7 +355,7 @@ class Digitalize(Encoder,FeatureTrans):
                 # logging.debug("Column %s (non-numeric) would be freq.coded with %i top variants",col,self.ncut)
                 self.features.append({
                     'name':col,  
-                    'func':__class__.freq,
+                    'func':__class__.top,
                     'param': {"n":self.ncut}
                     })
         self.fitted = True
