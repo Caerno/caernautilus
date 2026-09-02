@@ -451,7 +451,7 @@ class SlowPolyLinearReg(FeatureTrans):
     }
     
     # object creation
-    def __init__(self,gener:list=[1],norm:str=None,alpha:float=None):
+    def __init__(self,gener:list=[0,1],norm:str=None,alpha:float=None):
         '''
         Planning check and data generation for columns (synthetic features addon),
         than data normalization

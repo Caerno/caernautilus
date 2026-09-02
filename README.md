@@ -135,7 +135,7 @@ img_framaker(img, 20, PCA)   # image restored from 20 components
 
 ## Estimator from scratch
 
-`SlowPolyLinearReg(gener=[1], norm=None, alpha=None)` — linear regression written on
+`SlowPolyLinearReg(gener=[0, 1], norm=None, alpha=None)` — linear regression written on
 numpy/pandas, with polynomial and non-linear feature generation (`0` = intercept,
 integers = powers, `"sqrt"`/`"cbrt"`/`"log2"`/`"ln"`/`"log10"`), optional normalization
 (`"minmax"`, `"std"`, `"max"`, `"mean"`) and L2 regularization. Closed-form solution,
@@ -143,8 +143,8 @@ so it warns you about singular and ill-conditioned matrices instead of hiding th
 (and falls back to the least-norm solution rather than giving up).
 It exists to show the mechanics, not to compete with `sklearn.linear_model`.
 
-Mind the default: `gener=[1]` means x alone, **without an intercept** — the line is
-forced through the origin. Pass `0` explicitly to get one.
+The default `gener=[0, 1]` is the plain intercept + x. Drop the `0` only if you
+really want the line forced through the origin.
 
 ```python
 model = SlowPolyLinearReg(gener=[0, 1, 2], norm="std", alpha=0.01)

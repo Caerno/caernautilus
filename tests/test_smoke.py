@@ -186,6 +186,12 @@ def test_intercept_is_recovered(line):
     assert np.ravel(model.w) == pytest.approx([5, 3], abs=0.1)
 
 
+def test_default_fits_an_intercept(line):
+    '''The old default was x alone, which forced the line through the origin.'''
+    X, y = line
+    assert np.ravel(C.SlowPolyLinearReg().fit(X, y).w) == pytest.approx([5, 3], abs=0.1)
+
+
 def test_score_is_r2_not_squared_correlation(line):
     '''corr**2 ignores bias and scale: a model off by a constant still scored ~1.'''
     X, y = line
