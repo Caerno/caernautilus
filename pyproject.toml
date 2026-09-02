@@ -17,6 +17,7 @@ dependencies = [
     "scikit-learn>=1.0",
     "matplotlib>=3.4",
     "seaborn>=0.11",
+    "jinja2>=3",          # multicolumn() renders through DataFrame.style
 ]
 
 [project.optional-dependencies]
@@ -35,3 +36,10 @@ caernautilus = "."
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# our own deprecations are errors; what our dependencies deprecate among
+# themselves (old matplotlib on py3.9, say) is not ours to fix
+filterwarnings = [
+    "error::FutureWarning",
+    "ignore::DeprecationWarning",
+    "error::DeprecationWarning:caernautilus.*",
+]

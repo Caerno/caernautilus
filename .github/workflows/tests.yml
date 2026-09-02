@@ -19,6 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install .[test]
-      - run: pytest -q -W error::FutureWarning -W error::DeprecationWarning
+      - run: pytest -q
         env:
           MPLBACKEND: Agg
