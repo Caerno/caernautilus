@@ -13,9 +13,13 @@ pip install git+https://github.com/Caerno/caernautilus.git
 ```
 
 On Kaggle / Colab the same line works in a cell (`!pip install git+...`).
-For an offline kernel, take [`download/caernautilus.zip`](download/caernautilus.zip),
-add it as a dataset, unzip next to the notebook and import the modules directly
-(`from classes import NanFixer`). The zip is rebuilt by `update.ipynb`.
+For a kernel with no internet, add
+[the archive GitHub builds for every commit](https://github.com/Caerno/caernautilus/archive/refs/heads/main.zip)
+as a dataset and install it from disk:
+
+```bash
+pip install --no-deps /kaggle/input/<your-dataset>/caernautilus-main.zip
+```
 
 Requires Python ≥ 3.9, numpy, pandas, scikit-learn, matplotlib, seaborn.
 
