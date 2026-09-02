@@ -499,7 +499,7 @@ class SlowPolyLinearReg(FeatureTrans):
         for key, generator in self.generators.items():
             # const hack
             if key == 0:
-                addon = pd.DataFrame(np.ones((rows,1)))
+                addon = pd.DataFrame(np.ones((rows,1)),index=X.index)
                 namecol(addon,0)
                 result = pd.concat([addon,result],axis=1)
             else:
@@ -514,17 +514,27 @@ class SlowPolyLinearReg(FeatureTrans):
         Apply checks, column generation and normalization
         '''
         X = pd.DataFrame(X)
+        if X.isna().any().any():
+            raise ValueError("NA values have no weight to learn - fill them first")
         for key, check in self.checks.items():
             if not X.apply(check).all():
                 raise ValueError(f"Try different column generators, other than {key}")
         X_wide = self.__gen_cols(X)
-        X_wide = self.normalize(self,X_wide).fillna(1)
+        if X_wide.empty:
+            return X_wide
+        # the constant column is the intercept, not a feature - it stays out of normalization
+        variable = X_wide.columns.get_level_values("function") != 0
+        X_wide = pd.concat([X_wide.loc[:,~variable],
+                            self.normalize(self,X_wide.loc[:,variable])],axis=1)
         return X_wide
 
     def fit(self, X, y):
         '''
         Finding the most suitable weights for feature(s)
         '''
+        for stat in ("norm_min","norm_max","norm_mean","norm_std"):
+            setattr(self,stat,None) # a refit is a fresh fit, not a continuation
+
         X_wide = self.complete(X)
 
         XTX = X_wide.T @ X_wide
@@ -540,10 +550,13 @@ class SlowPolyLinearReg(FeatureTrans):
             print("Ill-conditioned matrix!")
         try:
             # closed-form solution
-            self.w = np.linalg.inv(XTX) @ (XTY)
+            self.w = np.linalg.solve(XTX,XTY)
         except np.linalg.LinAlgError:
-            print("Can't fit the data")
-            pass  # TODO: do numerical minimum finding       
+            print("Singular matrix - falling back to the least-norm solution")
+            self.w = np.linalg.lstsq(XTX,XTY,rcond=None)[0]
+
+        return self
+
     
     def predict(self, X):
         '''
@@ -556,6 +569,5 @@ class SlowPolyLinearReg(FeatureTrans):
         '''
         R2-score of prediction
         '''
-        X_wide = self.complete(X)
-        y_pred = X_wide.dot(self.w)
-        return np.corrcoef(y,y_pred)[0,1]**2
+        y_pred = self.predict(X)
+        return 1 - ((y - y_pred)**2).sum() / ((y - np.mean(y))**2).sum()

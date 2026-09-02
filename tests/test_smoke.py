@@ -9,6 +9,8 @@ import pytest
 from sklearn.base import clone
 from sklearn.decomposition import PCA
 from sklearn.exceptions import NotFittedError
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
 from caernautilus import classes as C
@@ -150,14 +152,70 @@ def test_featuretrans_bilabel():
     assert C.FeatureTrans.bilabel(pd.Series(["l", "r"], name="a")).tolist() == [0, 1]
 
 
+@pytest.fixture
+def line():
+    '''y = 3x + 5 with a bit of noise.'''
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"x": rng.uniform(1, 10, 300)})
+    return X, 3 * X["x"] + 5 + rng.normal(0, 0.5, 300)
+
+
 def test_slow_poly_linear_reg():
     rng = np.random.default_rng(0)
     X = pd.DataFrame({"x": rng.uniform(1, 10, 300)})
     y = 3 * X["x"] ** 2 - 2 * X["x"] + 5 + rng.normal(0, 1, 300)
-    model = C.SlowPolyLinearReg(gener=[0, 1, 2], norm="std", alpha=0.01)
-    model.fit(X, y)
+    model = C.SlowPolyLinearReg(gener=[0, 1, 2], norm="std", alpha=0.01).fit(X, y)
     assert model.score(X, y) > 0.99
     assert len(model.predict(X)) == len(X)
+
+
+@pytest.mark.parametrize("norm", [None, "minmax", "std", "max", "mean"])
+def test_intercept_survives_a_shuffled_index(line, norm):
+    '''The constant column used to carry its own RangeIndex, so anything that
+       reindexes X - train_test_split above all - broke the fit.'''
+    X, y = line
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=0)
+    model = C.SlowPolyLinearReg(gener=[0, 1], norm=norm).fit(X_tr, y_tr)
+    assert model.score(X_te, y_te) > 0.99
+    assert model.predict(X_te).index.equals(X_te.index)
+
+
+def test_intercept_is_recovered(line):
+    X, y = line
+    model = C.SlowPolyLinearReg(gener=[0, 1]).fit(X, y)
+    assert np.ravel(model.w) == pytest.approx([5, 3], abs=0.1)
+
+
+def test_score_is_r2_not_squared_correlation(line):
+    '''corr**2 ignores bias and scale: a model off by a constant still scored ~1.'''
+    X, y = line
+    model = C.SlowPolyLinearReg(gener=[0, 1]).fit(X, y)
+    assert model.score(X, y) == pytest.approx(r2_score(y, model.predict(X)))
+    model.w = np.asarray(model.w) * 2 + 100
+    assert model.score(X, y) == pytest.approx(r2_score(y, model.predict(X)))
+    assert model.score(X, y) < 0
+
+
+def test_refit_resets_normalization(line):
+    X, y = line
+    model = C.SlowPolyLinearReg(gener=[0, 1], norm="minmax").fit(X, y)
+    model.fit(X * 100, y)
+    assert float(np.ravel(model.norm_max)[-1]) > 100
+
+
+def test_na_is_refused(line):
+    X, y = line
+    X = X.copy()
+    X.iloc[0, 0] = np.nan
+    with pytest.raises(ValueError, match="NA values"):
+        C.SlowPolyLinearReg(gener=[0, 1]).fit(X, y)
+
+
+def test_singular_input_still_fits():
+    '''inv() used to raise and leave the object without weights at all.'''
+    X = pd.DataFrame({"a": [1.0, 2, 3, 4], "b": [2.0, 4, 6, 8]})   # b == 2a
+    model = C.SlowPolyLinearReg(gener=[1]).fit(X, pd.Series([1.0, 2, 3, 4]))
+    assert len(model.predict(X)) == 4
 
 
 def test_slow_poly_linear_reg_rejects_bad_generator():
