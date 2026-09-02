@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "caernautilus"
+version = "0.2.0"
+description = "Caerno utilities: EDA reports, plots and sklearn-compatible encoders"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+authors = [{ name = "Caerno" }]
+keywords = ["eda", "pandas", "sklearn", "kaggle"]
+dependencies = [
+    "numpy>=1.21",
+    "pandas>=1.3",
+    "scikit-learn>=1.0",
+    "matplotlib>=3.4",
+    "seaborn>=0.11",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/Caerno/caernautilus"
+
+# flat layout: the repo root itself is the package,
+# so `import classes` (zip drop-in) and `import caernautilus.classes` both work
+[tool.setuptools]
+packages = ["caernautilus"]
+
+[tool.setuptools.package-dir]
+caernautilus = "."
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
